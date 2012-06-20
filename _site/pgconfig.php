@@ -12,20 +12,22 @@ if (!isset ($pg_db)) $pg_db = "";
 if (!isset ($pg_schema)) $pg_schema = "mplus";
 $err_list = array ();
 
+
+if (isset ($_SERVER["PHP_AUTH_USER"])) {
+	if ($_SERVER["PHP_AUTH_USER"] == "testo" and $_SERVER["PHP_AUTH_PW"] == "rom") {
+		// allow to interface
+	}
+	else {
+		print ("U BAD!");
+		unset ($_SERVER["PHP_AUTH_USER"]);
+	}
+}
+
 if (!isset($_SERVER['PHP_AUTH_USER'])) {
 	header('WWW-Authenticate: Basic realm="Bug Zone"');
 	header('HTTP/1.0 401 Unauthorized');
 	print ("NEED AUTHORIZATION");
 	exit;
-}
-else {
-	if ($_SERVER["PHP_AUTH_USER"] == "testo" and $_SERVER["PHP_AUTH_PW"] == "rom") {
-		
-	}
-	else {
-		print ("U BAD!");
-		exit;
-	}
 }
 
 function errors_print () {
