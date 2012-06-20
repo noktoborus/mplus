@@ -1,6 +1,6 @@
 <?php
-require_once ("header.php");
 require_once ("pgconfig.php");
+require_once ("header.php");
 $pg = pg_connect ("host=$pg_host dbname=$pg_db user=$pg_user password=$pg_pass") or die ("Connection failed");
 $pg_qlrs = pg_query ($pg, "SET search_path TO $pg_schema");
 pg_free_result ($pg_qlrs);

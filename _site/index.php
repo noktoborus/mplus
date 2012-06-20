@@ -1,6 +1,6 @@
 <?php
-require_once ("header.php");
 require_once ("pgconfig.php");
+require_once ("header.php");
 $array = array ();
 
 $pg = pg_connect ("host=$pg_host dbname=$pg_db user=$pg_user password=$pg_pass") or die ("Connection failed");
