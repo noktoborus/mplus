@@ -1,4 +1,6 @@
-<?php ?>
+<?php
+	header ("Content-Type: text/html; charset=UTF-8");
+?>
 <!DOCTYPE html>
 <!-- vim: ft=html ff=unix fenc=utf-8
  file: i.html

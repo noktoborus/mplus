@@ -34,12 +34,10 @@ BEGIN
 	RETURN (SELECT substring(md5(now()::text || random()::text), 1, 12));
 END $$ LANGUAGE plpgsql;
 
--- tables
 CREATE SEQUENCE seq_users;
 CREATE TABLE users
 (
-	id integer NOT NULL DEFAULT nextval('seq_users'::regclass) UNIQUE,
-	username varchar(128) NOT NULL DEFAULT '' UNIQUE CHECK (char_length(username) >= 3),
+	id bigint NOT NULL DEFAULT (7000000000 + nextval('seq_users'::regclass)) UNIQUE,
 	password varchar(128) NOT NULL DEFAULT '' CHECK (char_length(password) >= 6),
 	-- contact data:
 	firstname varchar(256) NOT NULL CHECK (firstname != ''),
@@ -95,10 +93,10 @@ CREATE TABLE nodes
 	-- ident
 	visual varchar(12) NOT NULL DEFAULT node_visual(),
 	-- tree
-	id integer NOT NULL DEFAULT 1 UNIQUE,
+	id bigint NOT NULL DEFAULT 1 UNIQUE,
 	branch integer DEFAULT 0,
 	level integer DEFAULT 0,
-	upid integer DEFAULT NULL REFERENCES nodes(id),
+	upid bigint DEFAULT NULL REFERENCES nodes(id),
 	lid integer DEFAULT NULL,
 	rid integer DEFAULT NULL,
 	-- payment
@@ -106,16 +104,17 @@ CREATE TABLE nodes
 	repay float NOT NULL DEFAULT 0.0,
 	-- payday: WHERE extract('day', now()) = (nodes.payday * extract(day FROM date_trunc('month', now()) + INTERVAL '1 month' - INTERVAL '1 day'))::integer
 	payday float NOT NULL DEFAULT now_payday(),
-	cycle integer NOT NULL DEFAULT 12,
+	times_expire integer NOT NULL DEFAULT 0,
+	times_active integer NOT NULL DEFAULT 0,
 	-- user info
 	invited integer NOT NULL DEFAULT 0,
-	userid integer NOT NULL REFERENCES users(id),
+	userid bigint NOT NULL REFERENCES users(id),
 	CHECK (balance > 0)
 );
 COMMENT ON COLUMN nodes.branch IS 'link to branch table';
 COMMENT ON COLUMN nodes.repay IS 'pre-calced percent for repayment (100% as 1.0, 5% as 0.05)';
-COMMENT ON COLUMN nodes.cycle IS 'position in year (full-cycle)';
 COMMENT ON COLUMN nodes.invited IS 'how many have this node personaly invited nodes';
+COMMENT ON COLUMN nodes.upid IS 'expect link to users.id, automaticaly converted to link on nodes.id';
 
 CREATE SEQUENCE seq_branches;
 CREATE TABLE branches
@@ -157,6 +156,8 @@ BEGIN
 	SELECT INTO node NULL;
 	-- SELECT parent node, if present
 	IF NEW.upid IS NOT NULL THEN
+		SELECT id INTO NEW.id FROM nodes WHERE userid = (SELECT id FROM users WHERE users.id = NEW.upid LIMIT 1) ORDER BY nodes.lid, nodes.rid, id LIMIT 1;
+		-- TODO: ...
 		SELECT * INTO node FROM nodes WHERE nodes.id = NEW.upid;
 		IF node IS NOT NULL THEN
 			UPDATE nodes SET invited = (node.invited + 1) WHERE nodes.id = node.id;
@@ -222,8 +223,8 @@ CREATE TRIGGER tr_nodes_oninsert BEFORE INSERT ON nodes FOR EACH ROW EXECUTE PRO
 CREATE OR REPLACE FUNCTION nodes_onupdate()
 RETURNS TRIGGER AS $$
 BEGIN
-	-- calc payment
-	IF NEW.cycle < OLD.cycle THEN
+	-- calc payment with updated active time
+	IF NEW.times_active > OLD.times_active THEN
 		IF (OLD.balance != 0 AND OLD.repay != 0.0) THEN
 			INSERT INTO repayments (userid, amount) VALUES (OLD.userid, OLD.balance * OLD.repay);
 		END IF;
@@ -248,8 +249,8 @@ BEGIN
 	-- TODO
 	SELECT * FROM nodes WHERE nodes.invited >= 2;
 	-- calc pay
-	UPDATE nodes SET cycle = (nodes.cycle - 1)
-		WHERE nodes.cycle > 0
+	UPDATE nodes SET times_active = (nodes.times_active)
+		WHERE nodes.times_expire > 0
 			AND node.repay != 0.0
 			AND nodes.balance != 0
 			AND extract('day' FROM _n) = (nodes.payday * extract(day FROM date_trunc('month', _n) + INTERVAL '1 month' - INTERVAL '1 day'))::integer;

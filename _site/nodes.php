@@ -36,9 +36,9 @@ if (isset ($_POST["nodes_checkpost"])) {
 <form action='#' method='POST'/>
 	<table cellpadding='3' cellspacing='0' border='1'>
 	<tr>
-		<td>Assign to user</td><td><input type='text' name='username' value='<?php echo isset ($_POST["username"]) ? $_POST["username"] : ""; ?>'/></td>
+		<td>Прикрепить к пользователю</td><td><input type='text' name='username' value='<?php echo isset ($_POST["username"]) ? $_POST["username"] : ""; ?>'/></td>
 	</tr><tr>
-		<td>Assign to parent node</td><td><input type='text' name='parent' value='<?php echo isset ($_POST["parent"]) ? $_POST["parent"] : ""; ?>'/></td>
+		<td>Добавить в последователи пользователю</td><td><input type='text' name='parent' value='<?php echo isset ($_POST["parent"]) ? $_POST["parent"] : ""; ?>'/></td>
 	</tr><tr>
 		<td>Startup</td>
 			<td>
