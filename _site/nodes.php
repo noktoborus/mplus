@@ -15,11 +15,11 @@ if (isset ($_POST["nodes_checkpost"])) {
 	$sq .= "INSERT INTO nodes (";
 	if ($op_parent) $sq .= "upid,";
 	$sq .= "balance, userid) VALUES (";
-	if ($op_parent) $sq .= "(SELECT id FROM nodes WHERE visual = $3), ";
-	$sq .= "$1, (SELECT id FROM users WHERE username = $2)) RETURNING visual, level, balance;";
+	if ($op_parent) $sq .= "$3, ";
+	$sq .= "$1, $2) RETURNING visual, level, balance;";
 	pg_prepare ($pg, "nodes_ins", $sq);
 	array_push ($args, $pay);
-	array_push ($args, $_POST["username"]);
+	array_push ($args, $_POST["userid"]);
 	if ($op_parent) array_push ($args, $op_parent);
 	$pg_qlrs = pg_execute ($pg, "nodes_ins", $args);
 	if ($pg_qlrs) {
@@ -36,7 +36,7 @@ if (isset ($_POST["nodes_checkpost"])) {
 <form action='#' method='POST'/>
 	<table cellpadding='3' cellspacing='0' border='1'>
 	<tr>
-		<td>Прикрепить к пользователю</td><td><input type='text' name='username' value='<?php echo isset ($_POST["username"]) ? $_POST["username"] : ""; ?>'/></td>
+		<td>Прикрепить к пользователю</td><td><input type='text' name='userid' value='<?php echo isset ($_POST["userid"]) ? $_POST["userid"] : ""; ?>'/></td>
 	</tr><tr>
 		<td>Добавить в последователи пользователю</td><td><input type='text' name='parent' value='<?php echo isset ($_POST["parent"]) ? $_POST["parent"] : ""; ?>'/></td>
 	</tr><tr>

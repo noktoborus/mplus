@@ -83,7 +83,7 @@ CREATE TABLE repayments
 (
 	id integer NOT NULL DEFAULT nextval('seq_repayments'::regclass) UNIQUE,
 	at timestamp NOT NULL DEFAULT now_now(),
-	userid integer NOT NULL REFERENCES users(id),
+	userid bigint NOT NULL REFERENCES users(id),
 	amount bigint NOT NULL DEFAULT 0,
 	payout timestamp DEFAULT NULL
 );
