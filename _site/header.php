@@ -14,7 +14,12 @@
 	<body>
 <div class="nvbar">
 <?php
-$larr = array ("Добавить пользователя" => "usernew.php", "Список пользвателей" => "users.php", "Добавить узел" => "nodes.php", "Список узлов" => "index.php");
+$larr = array (
+	"Добавить пользователя" => "usernew.php",
+	"Список пользвателей" => "users.php",
+	"Добавить узел" => "nodes.php",
+	"Список узлов" => "index.php",
+	"Платежи" => "paylist.php");
 foreach ($larr as $title => $link) {
 	if ("/" . $link != $_SERVER["SCRIPT_NAME"]) {
 		print ("<span><a href='$link' titile='$title'>$title</a></span>");
