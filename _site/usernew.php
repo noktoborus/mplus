@@ -63,7 +63,7 @@ pg_close ($pg);
 	</tr> <tr>
 		<td>БИК</td><td><input type='text' size='9' maxlength='9' name='bankid' value='<?php c ("bankid"); ?>'/></td>
 	</tr> <tr>
-		<td>Банк</td><td><input type='text' size='30' name='bankname' value='<?php c ("bankname"); ?>'/></td>
+		<td>Название Банка</td><td><input type='text' size='30' name='bankname' value='<?php c ("bankname"); ?>'/></td>
 	</tr> <tr>
 		<td>ИНН Банка</td><td><input type='text' size='12' maxlength='12' name='taxid' value='<?php c ("taxid"); ?>'/></td>
 	</tr> <tr>
@@ -74,3 +74,4 @@ pg_close ($pg);
 	</table>
 </form>
 <?php require_once ("footer.php"); ?>
+
