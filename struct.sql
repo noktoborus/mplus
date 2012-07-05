@@ -1,8 +1,5 @@
 /* vim: ft=pgsql
 */
-DROP SCHEMA mplus CASCADE;
-CREATE SCHEMA mplus;
-SET search_path TO mplus;
 -- library
 -- f_IsValidEmail(text):
 -- http://stackoverflow.com/questions/4908211/postgres-function-to-validate-email-address
@@ -59,7 +56,8 @@ CREATE TABLE bank
 	loan bigint DEFAULT 0,
 	debt bigint DEFAULT 0,
 	balance bigint DEFAULT 0,
-	nowfix interval DEFAULT '0 day'::interval
+	starttime date DEFAULT 0,
+	nowtime interval DEFAULT '0 day'::interval
 );
 COMMENT ON COLUMN bank.nowfix IS 'debug value, for increment current data (WARN: use now_now() istead now() in code)';
 INSERT INTO bank (loan, debt) VALUES (0, 0);

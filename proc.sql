@@ -9,6 +9,7 @@ BEGIN
 	RETURN NEW;
 END $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_bank_onupdate ON bank;
 CREATE TRIGGER tr_bank_onupdate BEFORE UPDATE ON bank FOR EACH ROW EXECUTE PROCEDURE bank_onupdate();
 
 CREATE OR REPLACE FUNCTION repayments_oninsert()
@@ -21,6 +22,7 @@ BEGIN
 	RETURN NEW;
 END $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_repayments_oninsert ON repayments;
 CREATE TRIGGER tr_repayments_oninsert AFTER INSERT ON repayments FOR EACH ROW EXECUTE PROCEDURE repayments_oninsert();
 
 CREATE OR REPLACE FUNCTION nodes_oninsert()
@@ -33,20 +35,16 @@ BEGIN
 	-- SELECT parent node, if present
 	IF NEW.upid IS NOT NULL THEN
 		SELECT id INTO NEW.upid FROM nodes WHERE userid = (SELECT id FROM users WHERE users.id = NEW.upid LIMIT 1) AND times_active < times_expire ORDER BY times_active, invited, (nodes.lid IS NOT NULL), (nodes.rid IS NOT NULL), id LIMIT 1;
-		SELECT id, rid, lid, level, branch INTO node FROM nodes WHERE nodes.id = NEW.upid;
-		IF node.id IS NOT NULL THEN
-			RAISE NOTICE 'NODE %', node;
-			UPDATE nodes SET invited = (nodes.invited + 1) WHERE nodes.id = node.id;
-			IF (node.lid IS NOT NULL AND node.rid IS NOT NULL) THEN
-				RAISE NOTICE 'research %', node;
-				-- SELECT last node FROM branch on wanted node
-				-- SELECT INTO node * FROM nodes WHERE nodes.branch = node.branch AND (nodes.lid IS NULL OR nodes.rid IS NULL) LIMIT 1;
-				SELECT id, rid, lid, level, branch INTO node FROM nodes WHERE nodes.branch IN (SELECT id FROM branches WHERE nodeid = 1 GROUP BY id) AND (nodes.lid IS NULL OR nodes.rid IS NULL) LIMIT 1;
-			END IF;
-		END IF;
-		RAISE NOTICE 'IS NULL %?', node;
 	END IF;
-	IF node.id IS NULL THEN
+	SELECT id, rid, lid, level, branch INTO node FROM nodes WHERE nodes.id = NEW.upid;
+	IF node.id IS NOT NULL THEN
+		UPDATE nodes SET invited = (nodes.invited + 1) WHERE nodes.id = node.id;
+		IF (node.lid IS NOT NULL AND node.rid IS NOT NULL) THEN
+			-- SELECT last node FROM branch on wanted node
+			-- SELECT INTO node * FROM nodes WHERE nodes.branch = node.branch AND (nodes.lid IS NULL OR nodes.rid IS NULL) LIMIT 1;
+			SELECT id, rid, lid, level, branch INTO node FROM nodes WHERE nodes.branch IN (SELECT id FROM branches WHERE nodeid = 1 GROUP BY id) AND (nodes.lid IS NULL OR nodes.rid IS NULL) LIMIT 1;
+		END IF;
+	ELSEIF node.id IS NULL THEN
 		-- SELECT last node
 		SELECT id, rid, lid, level, branch INTO node FROM nodes WHERE nodes.rid IS NULL OR nodes.lid IS NULL ORDER BY level, id LIMIT 1;
 	END IF;
@@ -57,9 +55,7 @@ BEGIN
 	IF NEW.times_expire THEN
 		NEW.times_expire = 12;
 	END IF;
-	RAISE NOTICE '^^ %', node;
 	IF node.id IS NOT NULL THEN
-		RAISE NOTICE 'IS NOT NULL';
 		-- UPDATE node
 		IF node.lid IS NULL THEN
 			-- set id for node (level + 1)
@@ -91,7 +87,6 @@ BEGIN
 		NEW.level = node.level + 1;
 		RETURN NEW;
 	ELSE
-		RAISE NOTICE 'IS NOT NULL';
 		-- create a first branch
 		INSERT INTO branches (nodeid) VALUES (NEW.id);
 		SELECT currval INTO branchid FROM currval('seq_branches'::regclass);
@@ -103,6 +98,7 @@ BEGIN
 	END IF;
 END $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_nodes_oninsert ON nodes;
 CREATE TRIGGER tr_nodes_oninsert BEFORE INSERT ON nodes FOR EACH ROW EXECUTE PROCEDURE nodes_oninsert();
 
 CREATE OR REPLACE FUNCTION nodes_onupdate()
@@ -122,6 +118,7 @@ BEGIN
 	RETURN NEW;
 END $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_nodes_onupdate ON nodes;
 CREATE TRIGGER tr_nodes_onupdate BEFORE UPDATE ON nodes FOR EACH ROW EXECUTE PROCEDURE nodes_onupdate();
 
 CREATE OR REPLACE FUNCTION balance_update()
