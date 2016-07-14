@@ -7,7 +7,7 @@ pg_query ($pg, "SET search_path TO $pg_schema;");
 if (isset ($_POST["usernew_checkpost"])) {
 	$phone = "";
 	if ((isset ($_POST["phone1"]) && isset ($_POST["phone2"])) && (strlen ($_POST["phone1"]) && strlen ($_POST["phone2"]))) {
-		$phone = "+7" . $_POST["phone1"] . $_POST["phone2"];
+		$phone = "7" . $_POST["phone1"] . $_POST["phone2"];
 	}
 	$pg_qlrs = pg_prepare ($pg, "insertu", "INSERT INTO users (password, firstname, patronymic, surname, email, phone, taxid, cardno, account, bankid, bankname, paydir) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id;");
 	$pg_qlrs = pg_execute ($pg, "insertu",

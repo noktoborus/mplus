@@ -34,7 +34,7 @@ DECLARE
 BEGIN
 	-- SELECT parent node, if present
 	IF NEW.upid IS NOT NULL THEN
-		SELECT id INTO NEW.upid FROM nodes WHERE userid = (SELECT id FROM users WHERE users.id = NEW.upid LIMIT 1) AND times_active < times_expire ORDER BY times_active, invited, (nodes.lid IS NOT NULL), (nodes.rid IS NOT NULL), id LIMIT 1;
+		SELECT id INTO NEW.upid FROM nodes WHERE userid = (SELECT id FROM users WHERE users.id = NEW.upid LIMIT 1) ORDER BY (times_active < times_expire) DESC, times_active, invited, (nodes.lid IS NOT NULL), (nodes.rid IS NOT NULL), id LIMIT 1;
 	END IF;
 	SELECT id, rid, lid, level, branch INTO node FROM nodes WHERE nodes.id = NEW.upid;
 	IF node.id IS NOT NULL THEN
@@ -52,9 +52,6 @@ BEGIN
 	UPDATE bank SET loan = (bank.loan + NEW.balance);
 	-- get repayment factor
 	NEW.repay = (SELECT repay FROM repayrules WHERE minimal <= NEW.balance AND (maximal >= NEW.balance OR maximal IS NULL) LIMIT 1);
-	IF NEW.times_expire THEN
-		NEW.times_expire = 12;
-	END IF;
 	IF node.id IS NOT NULL THEN
 		-- UPDATE node
 		IF node.lid IS NULL THEN
@@ -121,14 +118,14 @@ END $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS tr_nodes_onupdate ON nodes;
 CREATE TRIGGER tr_nodes_onupdate BEFORE UPDATE ON nodes FOR EACH ROW EXECUTE PROCEDURE nodes_onupdate();
 
-CREATE OR REPLACE FUNCTION balance_update()
+CREATE OR REPLACE FUNCTION update_balance()
 RETURNS void AS $$
 DECLARE
 	node RECORD;
 	_n timestamp;
 	_r float;
 BEGIN
-	SELECT INTO _n now_now();
+	SELECT INTO _n now_work();
 	FOR node IN (SELECT * FROM nodes WHERE invited >= 2) LOOP
 		-- recalc pay percentes
 		-- set base percent
@@ -151,10 +148,18 @@ BEGIN
 		END IF;
 	END LOOP;
 	-- calc pay
-	UPDATE nodes SET times_active = (nodes.times_active)
+	UPDATE nodes SET times_active = (nodes.times_active + 1)
 		WHERE nodes.times_expire > 0
 			AND node.repay != 0.0
 			AND nodes.balance != 0
 			AND extract('day' FROM _n) = (nodes.payday * extract(day FROM date_trunc('month', _n) + INTERVAL '1 month' - INTERVAL '1 day'))::integer;
+END $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION update_day()
+RETURNS void AS $$
+BEGIN
+	UPDATE bank SET workday = (workday + '1 day'::interval);
+	PERFORM update_balance();
 END $$ LANGUAGE plpgsql;
 

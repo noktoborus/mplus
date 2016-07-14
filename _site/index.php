@@ -18,7 +18,7 @@ else {
 }
 pg_free_result ($pg_qlrs);
 # get table
-$pg_qlrs = pg_query ($pg, "SELECT visual, id, level, upid, lid, rid, balance FROM nodes ORDER BY level, id");
+$pg_qlrs = pg_query ($pg, "SELECT visual, id, level, upid, lid, rid, balance, repay FROM nodes ORDER BY level, id");
 
 print ("<table border='1' cellpadding='2' cellspacing='0'>\n<tr>\n");
 for ($i = 0; $i < (1 << $array); $i++) {
@@ -42,7 +42,7 @@ while (($pg_row = pg_fetch_array ($pg_qlrs)) != NULL) {
 	}
 	print ("\t<td align='center' colspan='" . $colspan . "'>");
 	# assign free cel
-	print (($pg_row["id"] . "(" . $pg_row["visual"] . ")" . " @ ". $pg_row["balance"]));
+	print (($pg_row["id"] . "(" . $pg_row["visual"] . ")" . " @ ". $pg_row["balance"] . " x " . $pg_row["repay"]));
 	print ("</td>\n");
 	$lastid = $pg_row["id"];
 #	print_r ($pg_row);
